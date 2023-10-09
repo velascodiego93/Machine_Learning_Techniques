@@ -1,0 +1,260 @@
+---
+title: "Ejercicios de libro - Sección 2.4"
+author: "Diego Velasco"
+date: "03/04/2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Ejercicio 1
+
+For each of parts (a) through (d), indicate whether we would generally expect the performance of a flexible statistical learning method to be better or worse than an inflexible method. Justify your answer.
+
+(a) The sample size n is extremely large, and the number of predictors p is small.
+
+(b) The number of predictors p is extremely large, and the number of observations n is small.
+
+(c) The relationship between the predictors and response is highly non-linear.
+
+(d) The variance of the error terms, i.e. $\sigma^2=Var(\epsilon)$, is extremely high.
+
+#### Respuesta
+
+(a) Cuando el tamaño de la muestra es muy grande comparado con la dimensionalidad de la misma, es esperable que un modelo flexible sea más apropiado.
+
+    Los modelos más flexibles tienden a tener menor error de sesgo (debido a que no se limita la clase de funciones a utilizar a ningún tipo en particular) y mayor poder predictivo, pero pueden tener desventajas desde el punto de vista de interpretabilidad, sobreajuste y varianza. Sin embargo, estas desventajas se verán disminuidas en un dataset de este tipo.
+
+    En primer lugar, un dataset con una gran cantidad de observaciones implica que es posible generar un dataset de entrenamiento de gran tamaño. Esto disminuye el riesgo de sobreajuste tanto en modelos paramétricos como no paramétricos, ya que es más difícil que el modelo se ajuste a la gran cantidad de observaciones en dicha partición. Asimismo, si bien los métodos más flexibles tienen mayor varianza asociada, entrenar un modelo de este tipo con mayor cantidad de datos tenderá a reducir este problema. En esta línea, la varianza del método podría reducirse utilizando métodos de agregación o de validación cruzada. Dado que se tienen pocas variables, el costo computacional adicional por entrenar al modelo más de una vez puede resultar manejable.
+
+    Por el otro lado, un dataset de pocas variables predictoras resulta naturalmente más fácil de interpretar, lo que resulta más favorable al usar modelos que sufran de poca interpretabilidad. Asimismo, un dataset de gran tamaño y baja dimensionalidad es un escenario ideal para utilizar métodos basados en distancias (KNN, por ejemplo), ya que a medida que aumenta la dimensionalidad, los puntos tienden a estar más lejos entre sí.
+
+(b) Por el contrario, cuando el tamaño de la muestra es muy pequeño comparado con la dimensionalidad de la misma, es esperable que un modelo menos flexible sea más apropiado.
+
+    Los modelos más flexibles requieren mayor cantidad de datos para ajustar, por lo que un dataset con pocos datos de entrenamiento implica un mayor riesgo de sobreajuste. En esta línea, los modelos menos flexibles tienden a tener menor varianza, reduciendo el riesgo de sobreajuste. Asimismo, una mayor dimensionalidad implica mayor distancias entre puntos, lo que es desfavorable para el uso de métodos basados en distancias.
+
+    Por otro lado, en el caso de que se tengan más variables que datos, es posible entrenar un modelo paramétrico utilizando un proceso de selección de variables que reduzca la cantidad de las mismas a un número razonable (Subset Selection o Lasso, por ejemplo).
+
+(c) Cuando la relación entre las variables predictoras y la variable objetivo es altamente no lineal, es esperable que un modelo flexible sea más apropiado.
+
+    La principal razón de esto es que los modelos flexibles tienden a tener un error de sesgo menor, por lo que permiten capturar una variedad más amplia de relaciones entre los datos, lo que es útil en un dataset como el planteado. Por el otro lado, los métodos menos flexibles introducen un error de sesgo mayor. Si la relación entre variables predictoras y objetivo es altamente no lineal, la utilización de un método con poca flexibilidad implicaría la elección previa de una clase de funciones en base a datos de difícil interpretación.
+
+(d) Si la varianza del error irreducible es extremadamente alta, es esperable que un modelo menos flexible sea más apropiado.
+
+    Dada una observación $X = (x_1,...,x_d)$, el valor de la variable objetivo para esa observación será $Y = f(X) +\epsilon$. El objetivo es estimar la función $f(X)$ lo más precisamente posible. Aún en el caso de que esta función sea razonablemente sencilla, una alta varianza de $\epsilon$ agregará ruido a los datos y "esconderá" la verdadera función $f(X)$. Un modelo flexible será más sensible a este ruido, sobreajustando las predicciones a los valores afectados por este ruido y así perdiendo la relación buscada. Por el otro lado, un modelo menos flexible tendrá un menor nivel de ajuste a los datos, teniendo menor sensibilidad al ruido, pudiendo aproximar la función $f(X)$ con mayor precisión.
+
+------------------------------------------------------------------------
+
+### Ejercicio 4
+
+4\. You will now think of some real-life applications for statistical learning.
+
+(a) Describe three real-life applications in which classification might be useful. Describe the response, as well as the predictors. Is the goal of each application inference or prediction? Explain your answer.
+
+(b) Describe three real-life applications in which regression might be useful. Describe the response, as well as the predictors. Is the goal of each application inference or prediction? Explain your answer.
+
+(c) Describe three real-life applications in which cluster analysis might be useful.
+
+#### Respuesta
+
+a.  <div>
+
+    -   **Aplicación 1**: Predecir si un paciente tendrá una enfermedad o no, en base a resultados de análisis médicos, como pueden ser: resultados de análisis de sangre (glucosa, glóbulos rojos y blancos, plaquetas, etc.), resultados de análisis de orina, placas o radiografías, etc. El objetivo, en este caso, sería de predicción.
+
+    -   **Aplicación 2:** Predecir si un equipo fallará o no, en base a mediciones de sensores relacionados con el equipo. Las variables que podrían resultar de interés pueden ser: temperatura del equipo, temperatura ambiente, presión del líquido, voltaje, amperaje, hora de medición, etc. y la variable objetivo sería "falla" (variable binaria). Los sensores medirían estas cantidades con cierta periodicidad en el tiempo, y se buscaría determinar si un equipo falla o no en función de los valores de estas variables cierto tiempo antes de la medición en la que se registra la falla, de manera de predecir la falla con un margen de acción suficiente para prevenirla. En este caso, el objetivo principal sería predictivo. Sin embargo, podría también realizarse con fines de inferencia de manera de averiguar qué parámetros anticipan con mayor poder la presencia de una falla en el corto plazo (valores medios de presión o temperatura, valores picos, valores mínimos, etc.).
+
+    -   **Aplicación 3:** Análisis crediticio. Un banco podría determinar si es conveniente autorizar una línea de crédito a una persona, en base a datos personales y antecedentes financieros. Las variables que podrían resultar de interés pueden ser: edad, género, estado civil, tenencia de empleo (variable binaria), ingreso mensual, cantidad de presencias en clearing, patrimonio de la persona, etc. En este caso, el objetivo principal sería predictivo.
+
+    </div>
+
+b.  <div>
+
+    -   **Aplicación 1**: Predicción del valor de venta de una casa en función de parámetros asociados a la misma. Las variables predictoras razonablemente relevantes podrían ser: m2 construidos, m2 totales, cantidad de ambientes, cantidad de pisos, ubicación, antigüedad, si la misma es un reciclaje o no, etc. El objetivo, en este caso, podría ser tanto predictivo o de inferencia. Por ejemplo, un potencial inversor inmobiliario podría querer determinar el precio de venta de la casa previo a su construcción para determinar si invertir o no, mientras que una persona que está buscando una casa para comprar podría querer determinar las variables que más juegan en el precio final para buscar casas más baratas.
+
+    -   **Aplicación 2:** Identificar las variables que más influyen en la cantidad de rapiñas (o algún tipo de crimen) en una ciudad. Las variables predictoras razonablemente relevantes podrían ser: población total, cantidad de gente por encima y debajo de la franja de pobreza, cantidad de gente por nivel educativo, país, cantidad de armas por habitante, cantidad de otro crimen relacionado, ubicación de la ciudad (país, continente, etc.), mes del año. Las observaciones deberían incluir datos de varias ciudades, así como de varios momentos en el tiempo para dicha ciudad. El objetivo más inmediato sería el de inferencia, logrando identificar qué variables tienen mayor predictivo sobre la variable objetivo y así enfocarse en dichas variables para reducir el número de crímenes.
+
+    -   **Aplicación 3:** Predecir la cantidad de horas que llevará la construcción de una obra en función de datos de obras pasadas. Las variables predictoras razonablemente relevantes podrían ser: m3 a construir, tipo de obra, cantidad de rubros de construcción, cantidades de los rubros más significativos (hormigón, acero, movimiento de suelos), cantidad de días de lluvia en el período construido, ubicación de la obra, cantidad de km al centro poblado más cercano, cantidad de gente en la obra. Con las variables indicadas, el problema debería ser de inferencia, ya que no se contará con valores como la cantidad de días de lluvia de una obra previo a su contrucción. Sin embargo, podría encararse como un problema de inferencia y luego de predicción, omitiendo ese tipo de variables y evaluando la precisión del método.
+
+    </div>
+
+c.  <div>
+
+    -   **Aplicación 1:** Segmentar los clientes de alguna empresa en base a criterios no establecidos de antemano, de manera de generar estrategias de marketing personalizadas. Las variables predictoras razonablemente relevantes podrían ser personales del cliente (edad o rango etario, género, nacionalidad) y de hábitos comerciales (cantidad de compras por mes, categoría más comprada, categoría más buscada, años de antigüedad, periodicidad de entrada a la plataforma de la empresa, etc.)
+
+    -   **Aplicación 2:** Segmentación de productos que se compran juntos. Una empresa que vende productos de alguna categoría (limpieza, comestibles, productos del hogar, etc) podría querer agrupar productos que frecuentemente se compran juntos de manera de ofrecerlos en promoción, colocarlos juntos en una tienda física, o potenciar la venta de esos grupos de productos de alguna manera. Las variables de interés podrían ser: producto, identificador de compra (para identificar que los productos fueron comprados juntos), precio de los productos, cantidad comprada, lugar donde se realizó la compra, si la compra se realizó en tienda digital o física (variable binaria), monto total de la compra, etc.
+
+    -   **Aplicación 3:** Planificando una campaña política, el equipo de planificación podría buscar segmentar una población objetivo en base a datos de orientación política y antecedentes de las personas, de manera de construir una estrategia de campaña personalizada para cada grupo generado. Las variables de interés podrían ser personales: edad, género, nivel educativo, ingreso anual, estado civil, religión, cantidad de hijos, etc. así como relacionadas a la orientación política: cantidad de veces que votó a un partido político, opinión sobre temas sociales y políticos particulares, partido político de preferencia, si ejerce el voto o no, etc. Los datos podrían ser obtenidos en base a una encuesta en la cual las preguntas de carácter político sean de múltiple opción, de manera de que las respuestas posibles sean las mismas para todos los encuestados.
+
+    </div>
+
+------------------------------------------------------------------------
+
+### Ejercicio 9
+
+```{r}
+auto = read.table('Auto.data', header = TRUE, na.strings = '?', stringsAsFactors = TRUE)
+head(auto)
+View (auto)
+```
+
+a.  **Which of the predictors are quantitative, and which are qualitative?**
+
+```{r}
+for (var in names(auto)){
+  cat(paste0('number of unique values of ', var, ': ',(length(unique((auto[,var])))), '\n'))
+}
+```
+
+```{r}
+unique(auto$origin)
+unique(auto$cylinders)
+```
+
+Las variables **cuantitativas** son: mpg, displacement, horsepower, weight, acceleration, year.
+
+Las variables **cualitativas** son: cylinders, origin, name.
+
+Cabe destacar que, si bien las variable "origin" presenta valores numéricos, la misma presenta únicamente tres valores distintos, los cuales parecen ser una codificación de una variable categórica, por lo que se considera que la misma es categórica. Asimismo, la variable "cylinders" indica la cantidad de cilindros del auto, por lo que la naturaleza de la misma es numérica. Sin embargo, dada que la misma presenta únicamente cinco valores distintos, la misma también se considera como cualitativa.
+
+b.  **What is the range of each quantitative predictor? You can answer this using the range() function.**
+
+```{r}
+for (var in names(auto)){
+  if (var != 'name'& var != 'origin' & var != 'cylinders' & var != 'horsepower'){
+    cat('Range of', var, ':', range(auto[,var]),'\n')
+  }
+  else if (var == 'horsepower'){
+    cat ('Range of', var, ':', range(na.omit(auto[,var])), '\n')
+  }
+}
+```
+
+c.  **What is the mean and standard deviation of each quantitative predictor?**
+
+```{r}
+for (var in names(auto)){
+  if (var != 'name'& var != 'origin' & var != 'cylinders' & var != 'horsepower'){
+    cat(var, '\n')
+    cat('Mean:', mean(auto[,var]),'\n')
+    cat('Standard deviation:', sd(auto[,var]),'\n')
+    cat('-------------------------------------------------------', '\n')
+  }
+  else if (var == 'horsepower'){
+    cat (var, '\n')
+    cat ('Mean:', mean(na.omit(auto[,var])), '\n')
+    cat ('Standard deviation: ', sd(na.omit(auto[,var])), '\n')
+    cat('-------------------------------------------------------', '\n')
+  }
+}
+```
+
+d.  **Now remove the 10th through 85th observations. What is the range, mean, and standard deviation of each predictor in the subset of the data that remains?**
+
+```{r}
+auto_filtered = auto[-c(10:85), ]
+
+for (var in names(auto_filtered)){
+  if (var != 'name'& var != 'origin' & var != 'cylinders' & var != 'horsepower'){
+    cat(var, '\n')
+    cat('Range:', range(auto_filtered[,var]),'\n')
+    cat('Mean:', mean(auto_filtered[,var]),'\n')
+    cat('Standard deviation:', sd(auto_filtered[,var]),'\n')
+    cat('-------------------------------------------------------', '\n')
+  }
+  else if (var == 'horsepower'){
+    cat(var, '\n')
+    cat ('Range:', range(na.omit(auto_filtered[,var])), '\n')
+    cat ('Mean:', mean(na.omit(auto_filtered[,var])), '\n')
+    cat ('Standard deviation: ', sd(na.omit(auto_filtered[,var])), '\n')
+    cat('-------------------------------------------------------', '\n')
+  }
+}
+
+
+```
+
+e.  **Using the full data set, investigate the predictors graphically, using scatterplots or other tools of your choice. Create some plots highlighting the relationships among the predictors. Comment on your findings.**
+
+```{r}
+# Filtrado de dataset para mostrar variables de interés
+auto_to_plot = auto[,-c(2,7:9)]
+
+# Pairplots, diferenciando por color según valor de origin
+pairs(auto_to_plot, pch = 21, bg = c("red", "green3", "blue")[unclass(auto$origin)], 
+      col = "black", main = "Pair Plot of Auto Data")
+
+# Matriz de correlación
+cor_mat = cor(na.omit(auto_to_plot))
+cor_mat[upper.tri(cor_mat)] = NA
+print (cor_mat, na.print = '')
+
+heatmap(t(cor_mat),
+        col = rainbow(20, s = 0.5, v = 0.5),
+        Rowv = NA, Colv = NA, cexRow = 0.8, cexCol = 0.8, 
+        main = "Matriz de correlación", 
+        scale = "none",
+        margins = c(5, 10),
+        breaks = seq(-1, 1, by = 0.1),
+        )
+
+for (var in names(auto_to_plot)){
+  hist(auto_to_plot[,var], xlab = var, main = paste0('Histogram of ', var), breaks = 15)
+}
+
+plot (x = auto$year, y = auto$displacement, col = 'brown', xlab = 'year', ylab = 'displacement', 
+      main = 'displacement vs year', pch = 19)
+
+plot (x = auto$year, y = auto$mpg, col = 'brown', xlab = 'year', ylab = 'mpg', 
+      main = 'mpg vs year', pch = 19)
+
+plot (x = auto$cylinders, y = auto$displacement, col = 'brown', xlab = 'cylinders',
+      ylab = 'displacement', main = 'displacement vs cylinders', pch = 19)
+
+plot (x = auto$cylinders, y = auto$mpg, col = 'brown', xlab = 'cylinders', ylab = 'mpg', 
+      main = 'mpg vs cylinders', pch = 19)
+```
+
+Se realizan pares de scatterplots de las variables de mayor cardinalidad, clasificándolas con un color distinto según la variable categórica "origin". Es posible ver como varias de las variables presentan una clara relación entre ellas, entre las que se destacan:
+
+-   "mpg" en función de "displacement", "horsepower" y "weight": en estos tres casos, la variable "mpg" presenta una relación inversamente proporcional a las mencionadas. Esto tiene sentido, debido a que un vehículo con mayor tamaño de motor, potencia y peso tendrá razonablemente un menor rendimiento, es decir, recorrerá menos millas por galón de combustible. A su vez, la relación entre la aceleración del auto y su rendimiento parece tener cierto grado de proporcionalidad, aunque la relación es menos marcada. Esto también se aprecia en la matriz de correlación, teniendo valores aproximados a -0.80 para las primeras variables y +0.42 para el caso de aceleración
+
+-   Esta relación entre variables también es apreciable en los gráficos de "displacement", "horsepower" y weight. Observando el centro de la imagen, estos gráficos presentan una clara relación lineal positiva, lo que se evidencia aún más en la matriz de correlación, la cual presenta valores en el entorno de +0.90 para estas variables. Nuevamente, esto tiene sentido, ya que autos más pesados generalmente cuentan con motores más grandes (displacement) y mayor potencia. Asimismo, estas tres variables presentan una relación de proporcionalidad inversa con la variable de aceleración, pero nuevamente la misma es menos marcada que con las restantes. Esto también tiene sentido, ya que tiende a ser más difícil que autos más grandes y pesados alcancen altas velocidades en poco tiempo. Esto es coherente con la relación entre aceleración y mpg, ya que, como se mencionó antes, un alto mpg está relacionado con autos más livianos y de menor potencia, lo cuál lleva a que tengan mayores valores de aceleración. Además, en ambos casos la relación entre aceleración y el resto de las variables es débil.
+
+-   Dado que las variables "displacement", "horsepower" y "weight" presentan el mismo comportamiento entre ellas, se grafica únicamente una de ellas (displacement), así como la variable mpg, en función de las variables no utilizadas en los gráficos de pares (year y cylinders). Es posible ver como el rendimiento medio de los vehículos (mpg) aumenta con el año de fabricación, y disminuye con la cantidad de cilindros, lo que es razonable ya que se espera que autos más modernos puedan tener una mayor eficiencia, así como se espera que autos con motores más grandes y de mayor cilindrada consuman más combustible. Asimismo, también es posible ver como el tamaño del motor (displacement) aumenta con la cantidad de cilindros del mismo, lo que también resulta intuitivo.
+
+-   Por último, se realizan histogramas de las variables numéricas. Es posible ver como las variables mpg, weight y horsepower presentan un gran nivel de dispersión, con observaciones en todo el rango de cada variable pero con mayor cantidad de observaciones en torno al extremo inferior de la misma. La variable displacement también presenta un comportamiento similar, pero con valores dentro del rango para los cuales no existen observaciones. Luego, respecto a la variable de aceleración, el histograma marca una distribución muy aproximada a una distribución normal.
+
+f.  **Suppose that we wish to predict gas mileage (mpg) on the basis of the other variables. Do your plots suggest that any of the other variables might be useful in predicting mpg? Justify your answer.**
+
+```{r}
+# Matriz de correlación
+cor_mat = cor(na.omit(auto_to_plot))
+cor_mat[upper.tri(cor_mat)] = NA
+print (cor_mat, na.print = '')
+
+# Scatterplots de mpg en función de variables restantes
+plot (x = auto$displacement, y = auto$mpg, col = 'green3', xlab = 'displacement', ylab = 'mpg', 
+      main = 'mpg vs displacement', pch = 19)
+
+plot (x = auto$horsepower, y = auto$mpg, col = 'blue', xlab = 'horsepower', ylab = 'mpg', 
+      main = 'mpg vs horsepower', pch = 19)
+
+plot (x = auto$weight, y = auto$mpg, col = 'red', xlab = 'weight', ylab = 'mpg',
+      main = 'mpg vs weight', pch = 19)
+
+plot (x = auto$acceleration, y = auto$mpg, col = 'orange', xlab = 'acceleration',
+      ylab = 'mpg vs acceleration', main = 'acceleration vs mpg', pch = 19)
+
+plot (x = auto$year, y = auto$mpg, col = 'gray', xlab = 'year', ylab = 'mpg', main = 'mpg vs year', 
+      pch = 19)
+
+plot (x = auto$cylinders, y = auto$mpg, col = 'brown', xlab = 'cylinders', ylab = 'mpg', 
+      main = 'mpg vs cylinders', pch = 19)
+
+```
+
+Se realizan scatterplots de todas las variables predictoras en función de la variable objetivo "mpg". Como se mencionó anteriormente, las variables "displacement", "horsepower" y "weight" son las que tienen una mayor correlación con la variable objetivo, presentando coeficientes de correlación en el entorno de -0.80, por lo que se deduce que son las que tienen mayor valor predictivo. Cabe destacar que la relación parece ser más débil para valores más altos de la variable objetivo, por lo que es esperable que las predicciones tengan mayor nivel de error en el entorno de estos valores. Asimismo, los gráficos de las variables "cylinders" e "year" indican una tendencia decreciente y creciente respectivamente con la variable objetivo, aunque los rangos para cada valor de dicha variable son bastante amplios. Se espera que estas variables tengan un poder predictivo significativamente menor que las ya mencionadas. Por último, se espera que la variable "acceleration" tenga un poder predictivo despreciable en comparación con las ya mencionadas.

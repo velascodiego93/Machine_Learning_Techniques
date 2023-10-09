@@ -1,0 +1,742 @@
+---
+title: "Ejercicios de Práctico - Clasificación Binaria"
+author: "Diego Velasco"
+date: "03/04/2023"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Ejercicio 1
+
+From the Bayes Classifier, predict the class for each test data and compute the error.
+
+*Training sample*
+
+|       |     |     |     |     |     |     |     |     |
+|:-----:|-----|-----|-----|-----|-----|-----|-----|-----|
+| $x_1$ | a   | a   | b   | a   | a   | b   | b   | b   |
+| $x_2$ | b   | a   | a   | a   | a   | b   | b   | b   |
+|  $Y$  | 1   | 1   | 1   | 1   | -1  | -1  | -1  | -1  |
+
+*Test sample*
+
+|            |     |     |     |     |
+|------------|-----|-----|-----|-----|
+| $x_1$      | a   | a   | b   | b   |
+| $x_2$      | a   | b   | a   | b   |
+| $Y_{pred}$ | ?   | ?   | ?   | ?   |
+| $Y_{real}$ | 1   | -1  | 1   | 1   |
+
+#### Respuesta
+
+#### Versión manual:
+
+El clasificador de Bayes es aquel que maximiza las probabilidades a posteriori. En este caso, dado que la variable binaria objetivo puede tomar valores de 1 y -1, una observación será clasificada como 1 si se cumple:
+
+$$
+P(Y=1|X=X) > P(Y=-1|X=X)
+$$
+
+Utilizando la fórmula de Bayes, cada término de esta inecuación puede escribirse de la siguiente manera:
+
+$$
+P(Y=1|X=X) = \frac{P(Y=1)\space P(X=X|Y=1)}{P(X=X)}
+$$
+
+$$
+P(Y=-1|X=X) = \frac{P(Y=-1)\space P(X=X|Y=-1)}{P(X=X)}
+$$
+
+De manera que, simplificando el denominador, la inecuación planteada se expresa de la siguiente manera:
+
+$$
+P(X=X|Y=1)\times P(Y=1)>P(X=X|Y=-1)\times P(Y=-1)
+$$
+
+Dado que se tienen igual cantidad de datos de cada categoría en el dataset de entrenamiento, $P(Y=1) = P(Y=-1) = 0.5$ , de manera que una observación será clasificada como 1 si se cumple la siguiente desigualdad:
+
+$$
+P(X=X|Y=1)>P(X=X|Y=-1)
+$$
+
+Para hallar estas probabilidades, se utiliza el estimador de Naive Bayes, el cual asume distribución normal e independencia condicional de las variables univariantes $x_1, x_2$, de manera que:
+
+$$
+P(X=(x_1,x_2)|Y=1) = P(X_1=x_1|Y=1)\times P(X_2=x_2|Y=1)
+$$
+
+$$
+P(X=(x_1,x_2)|Y=-1) = P(X_1=x_1|Y=-1)\times P(X_2=x_2|Y=-1)
+$$
+
+Las probabilidades condicionales de cada variable univariante $x_1$ y $x_2$ son calculadas como la cantidad de observaciones de cada una de ellas que son iguales al valor correspondiente $a$ ó $b$ para cada subconjunto del dataset de entrenamiento $Y = 1$ e $Y=-1$. Estos cálculos se resumen en la siguiente tabla.
+
+|       |       |                         |                         |            |
+|:-----:|:-----:|:-----------------------:|:-----------------------:|:----------:|
+| $x_1$ | $x_2$ |  $P(X=(x_1,x_2)|Y=1)$   |  $P(X=(x_1,x_2)|Y=-1)$  | $Y_{pred}$ |
+|   a   |   a   | $0.75\times0.75=0.5625$ | $0.25\times0.25=0.0625$ |    $1$     |
+|   a   |   b   | $0.75\times0.25=0.1875$ | $0.25\times0.75=0.1875$ | $1^{(*)}$  |
+|   b   |   a   | $0.25\times0.75=0.1875$ | $0.75\times0.25=0.1875$ | $-1^{(*)}$ |
+|   b   |   b   | $0.25\times0.25=0.0625$ | $0.75\times0.75=0.5625$ |    $-1$    |
+
+(\*) Dado que las probabilidades de las observaciones 2 y 3 son iguales, se clasifica de manera arbitraria.
+
+#### Versión en R con paquete e1071:
+
+```{r}
+library(e1071)
+
+# Crear dataset de entrenamiento
+x1_train = c('a','a','b','a','a','b','b','b')
+x2_train = c('b','a','a','a','a','b','b','b')
+y_train = c(1,1,1,1,-1,-1,-1,-1)
+
+data_train = data.frame (x1 = x1_train,  x2 = x2_train, y = y_train)
+data_train
+
+# Ajuste de modelo
+nb = naiveBayes(y~x1+x2, data = data_train)
+
+# Crear dataset de testeo
+x1_test = c('a','a','b','b')
+x2_test = c('a','b','a','b')
+
+data_test = data.frame(x1 = x1_test, x2 = x2_test)
+
+data_test
+
+# Predicciones
+y_test_prob = predict(nb, newdata = data_test, type = 'raw')
+y_test = predict(nb, newdata = data_test)
+
+y_test
+y_test_prob
+
+```
+
+Es posible apreciar que las predicciones obtenidas son las mismas para la primera y última observación. Asimismo, también es posible ver que las probabilidades a posteriori son 0.5 para cada categoría en el caso de las observaciones 2 y 3, lo que coincide con la resolución manual. Por último, si bien no es posible comparar directamente las probabiliades a posteriori para los casos 1 y 4 con las calculadas manualmente debido a que en el desarrollo manual se realizó una simplificación por $P(X=X)$, sí es posible comparar el ratio entre $P(X=X|Y=1)$ y $P(X=X|Y=-1)$. Para el caso manual, este coeficiente vale $\frac{0.5625}{0.0625}=9$ para la observación 1 y $\frac{0.0625}{0.5625}=\frac{1}{9}$ para la observación 4. Para el caso en R, este coeficiente vale $\frac{0.9}{0.1}=9$ para la observación 1 y $\frac{0.1}{0.9}=\frac{1}{9}$ para la observación, por lo que se concluye que se obtiene los mismos resultados.
+
+------------------------------------------------------------------------
+
+### Ejercicio 2
+
+Suppose that $\pi_1=\pi_0=0.5$ and the densities are $g_1=N(0,1)$ and $g_0=0.7N(-3,1)+0.3N(1,2)$
+
+a.  Assuming equal cost find:
+
+    1.  Plot the densities and write the Bayes rule for this classification task.
+
+    2.  Write the Bayes decision boundary and find its solutions.
+
+b.  Assume that C(1; 0) = 2 and C(0; 1) = 6. Repeat questions above.
+
+    Nota: Se condidera $g_0(x) = 0.7N(-3,1) + 0.3N(1,2)$ según nota en sitio eva.
+
+#### Respuesta
+
+Siendo:
+
+-   $C(1,0)$ el costo de clasificar erróneamente una observación $Y=1$, como $Y=0$
+
+-   $C(0,1)$ el costo de clasificar erróneamente una observación $Y=0$, como $Y=1$
+
+Se define el riesgo de clasificar erróneamente una observación $Y\neq j$ como $Y = j$ como:
+
+$R(Y=j|X = x) = \sum_i P(Y=i|X=x).C(i,j)$ con $i\neq j$ ya que se considera que $C(i,i)=0\rightarrow$ en un problema de clasificación binaria con categorías 0 y 1, se tiene que:
+
+$$R(Y=1|X = x) = P(Y=0|X=x)\times C(0,1)$$
+
+$$R(Y=0|X = x) = P(Y=1|X=x)\times C(1,0)$$
+
+Luego, una observación se clasifica con $Y=1$ si se cumple que el riesgo de clasificarla erróneamente como $Y=1$ es menor que el de clasificarla como $Y=0$, es decir:
+
+$$R(Y=1|X=x)<R(Y=0|X=x) \leftrightarrow P(Y=0|X=x)\times C(0,1)<P(Y=1|X=x)]\times C(1,0)$$
+
+$$\leftrightarrow\frac{P(Y=1|X=x)}{P(Y=0|X=x)} > \frac{C(0,1)}{C(1,0)}$$
+
+Utilizando la fórmula de Bayes para cada término del lado izquierdo de la inecuación planteada, teniendo en cuenta que $P(Y=1)=\pi_1=P(Y=0)=\pi_0=0.5$, simplificando por $P(X=x)$ en el numerador y denominador, y aplicando el teorema del valor medio para el cálculo de la probabilidad de una variable continua, se tiene que:
+
+$$
+\frac{P(Y=1|X=x)}{P(Y=0|X=x)} = \frac{P(X=x|Y=1)}{P(X=x|Y=0)} = \frac{g_1(x)\Delta x}{g_0(x)\Delta x}=\frac{g_1(x)}{g_0(x)}
+$$
+
+De manera que una observación se clasificará como $Y=1$ si se cumple la siguiente relación:
+
+$$
+\frac{g_1(x)}{g_0(x)} > \frac{C(0,1)}{C(1,0)}
+$$
+
+Asimismo, se utiliza la fórmula de la densidad de la distribución normal univariada, presentada a continuación:
+
+$$
+g(x)=\frac{1}{\sqrt{2 \pi} \sigma} e^{-\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}}
+$$
+
+De manera que la expresión para $g_1(x)$ queda de la siguiente manera:
+
+$$
+g_1(x)=\frac{1}{\sqrt{2 \pi}} e^{-\frac{x^2}{2}}
+$$
+
+Análogamente, la expresión para $g_0(x)$ es:
+
+$$
+g_0(x)=\frac{0.7}{\sqrt{2 \pi}} e^{-\frac{1}{2}(x+3)^2}+
+\frac{0.3}{\sqrt{2 \pi}\sqrt{2}} e^{-\frac{1}{2}\frac{(x-1)^2}{(\sqrt{2})^2}}\\g_0(x)=\frac{1}{\sqrt{2\pi}}\left[ 0.7e^{-\frac{1}{2}(x+3)^2}+\frac{0.3}{\sqrt{2}}e^{-\frac{1}{4}(x-1)^2} \right] 
+$$
+
+De manera que la expresión de $\frac{g_1(x)}{g_0(x)}$ será:
+
+$$
+\frac{g_1(x)}{g_0(x)}=\frac{e^{-\frac{x^2}{2}}}{0.7e^{-\frac{1}{2}(x+3)^2}+\frac{0.3}{\sqrt{2}}e^{-\frac{1}{4}(x-1)^2}}
+$$
+
+a.  **Asumiendo costos iguales:**
+
+    1.  **Plot the densities and write the Bayes rule for this classification task.**
+
+    ```{r}
+    # graficar g1(x)
+    mu1 = 0 # media de g1(x)
+    sd1 = 1 # desviación estándar (raiz de la varianza) de g1(x)
+
+    # graficar g0(x)
+    mu01 = -3 # media de distribución N(-3,1)
+    mu02 = 1 # media de distribución N(1,2)
+
+    sd01 = 1 # desviación estándar (raiz de la varianza) de distribución N(-3,1)
+    sd02 = sqrt(2) # desviación estándar (raiz de la varianza) de distribución N(1,2)
+
+    N01 = function(x) dnorm(x, mean = mu01, sd = sd01)
+    N02 = function(x) dnorm(x, mean = mu02, sd = sd02)
+    g0 = function(x) 0.7*N01(x) + 0.3*N02(x)
+
+    curve(dnorm(x, mean = mu1, sd = sd1), xlim = c(-5,5), xlab = 'x', ylab = 'g(x)', 
+          col = 'red3', lwd = 2, ylim = c(0,0.5), main = 'Gráfico de densidades')
+
+    curve(g0, xlim = c(-5,5), xlab = 'x', ylab = 'g(x)', col = 'blue4', lwd = 2,
+          add = TRUE)
+
+    legend('topright', legend = c('g1(x)', 'g0(x)'), col = c('red3', 'blue4'), pch = 20)
+
+    ```
+
+    Dado que los costos de clasificar erróneamente son iguales, es decir, $C(0,1)=C(1,0)$, se tiene que la regla de Bayes para el problema de clasificación en cuestión es:
+
+    $$
+    Y_{pred} = 1 \space \space si \space \space F(x)=
+    \frac{g_1(x)}{g_0(x)}-1=\frac{e^{-\frac{x^2}{2}}}{0.7e^{-\frac{1}{2}(x+3)^2}+\frac{0.3}{\sqrt{2}}e^{-\frac{1}{4}(x-1)^2}}-1 >0
+    $$
+
+$$
+Y_{pred} = 0 \space \space si \space \space F(x)=
+\frac{g_1(x)}{g_0(x)}-1=\frac{e^{-\frac{x^2}{2}}}{0.7e^{-\frac{1}{2}(x+3)^2}+\frac{0.3}{\sqrt{2}}e^{-\frac{1}{4}(x-1)^2}}-1 <0
+$$
+
+2.  **Write the Bayes decision boundary and find its solutions**.
+
+    La frontera de Bayes para el problema en cuestión se da cuando la función $F(x)$ se anula, es decir:
+
+    $$
+    F(x)=
+    \frac{e^{-\frac{x^2}{2}}}{0.7e^{-\frac{1}{2}(x+3)^2}+\frac{0.3}{\sqrt{2}}e^{-\frac{1}{4}(x-1)^2}}-1 =0
+    $$
+
+    En la celda de código siguiente se halla la frontera de Bayes calculando la función $F(x)$ directamente como la división $\frac{g_1(x)}{g_0(x)}-1$, ya que se definen $g_1(x)$ y $g_0(x)$ previamente. Sin embargo, la función obtenida es idéntica a la función recién planteada
+
+```{r}
+# Definición de funciones
+g1 = function(x) dnorm(x, mean = mu1, sd = sd1)
+
+f = function(x) g1(x)/g0(x) - 1
+
+# Cálculo de raíces
+root1 = uniroot(f,c(-5,0))
+root2 = uniroot(f,c(0,5))
+cat ('Primera raiz de f(x):',as.numeric(root1[1]),'\n')
+cat ('Segunda raiz de f(x):',as.numeric(root2[1]))
+
+# Gráficos
+curve(f, xlim = c(-5,5), xlab = 'x', ylab = 'F(x)', col = 'blue4', lwd = 2, 
+      main = 'Frontera de Bayes para C(0,1) = C(1,0) = 1')
+abline(h = 0, col = 'black', lwd = 1, lty = 2)
+abline(v = root1, col = 'black', lwd = 1, lty = 2)
+abline(v = root2, col = 'black', lwd = 1, lty = 2)
+text(x = 3, y = 0.5, labels = "Ypred = 0", col = 'red4', cex = 1.2)
+text(x = 0, y = 0.5, labels = "Ypred = 1", col = 'black', cex = 1.2)
+text(x = -3, y = 0.5, labels = "Ypred = 0", col = 'red4', cex = 1.2)
+
+legend('topright', legend = 'F(x) = g1(x)/g0(x) - 1', col = 'blue4', pch = 20)
+```
+
+b.  **Assume that C(1; 0) = 2 and C(0; 1) = 6. Repeat questions above**
+
+Los gráficos de las densidades son idénticos a los generados en la parte anterior. Sin embargo, la regla de Bayes cambia para este caso. Como se mostró previamente, una clasificación será clasificada como $Y=1$ si:
+
+$$
+\frac{g_1(x)}{g_0(x)} > \frac{C(0,1)}{C(1,0)}
+$$ Dado que $C(0,1) = 6$ y $C(1,0)=2$, se tiene que $\frac{C(0,1)}{C(1,0)} = 3$, de manera que la regla de Bayes para este caso sera:
+
+$$
+Y_{pred} = 1 \space \space si \space \space F(x)=
+\frac{g_1(x)}{g_0(x)}-3=\frac{e^{-\frac{x^2}{2}}}{0.7e^{-\frac{1}{2}(x+3)^2}+\frac{0.3}{\sqrt{2}}e^{-\frac{1}{4}(x-1)^2}}-3 >0
+$$
+
+$$
+Y_{pred} = 0 \space \space si \space \space F(x)=
+\frac{g_1(x)}{g_0(x)}-3=\frac{e^{-\frac{x^2}{2}}}{0.7e^{-\frac{1}{2}(x+3)^2}+\frac{0.3}{\sqrt{2}}e^{-\frac{1}{4}(x-1)^2}}-3 <0
+$$
+
+```{r}
+# Definición de funciones
+f3 = function(x) g1(x)/g0(x) - 3
+
+# Cálculo de raíces
+root1 = uniroot(f3,c(-5,0))
+root2 = uniroot(f3,c(0,5))
+cat ('Primera raiz de f(x):',as.numeric(root1[1]),'\n')
+cat ('Segunda raiz de f(x):',as.numeric(root2[1]))
+
+# Gráficos
+curve(f3, xlim = c(-5,5), xlab = 'x', ylab = 'F(x)', col = 'blue4', lwd = 2,
+      main = 'Frontera de Bayes para C(0,1) = 6 y C(1,0) = 2')
+abline(h = 0, col = 'black', lwd = 1, lty = 2)
+abline(v = root1, col = 'black', lwd = 1, lty = 2)
+abline(v = root2, col = 'black', lwd = 1, lty = 2)
+text(x = 3, y = 0.45, labels = "Ypred = 0", col = 'red4', cex = 1.2)
+text(x = -0.1, y = 0.45, labels = "Ypred = 1", col = 'black', cex = 1.2)
+text(x = -3, y = 0.5, labels = "Ypred = 0", col = 'red4', cex = 1.2)
+
+legend('topright', legend = 'F(x) = g1(x)/g0(x) - 3', col = 'blue4', pch = 20)
+```
+
+Es posible apreciar como, al aumentar el costo de clasificar erróneamente una observación $Y=0$ respecto al costo de clasificar erróneamente una observación $Y=1$, la zonas en la cuales la predicción será $Y=0$ aumentan en tamaño, mientras que la zona en la que la predicción será $Y=1$ disminuye en tamaño. Esto tiene sentido, ya que al aumentar el tamaño de la zona en la que la predicción será $Y=0$, más observaciones serán clasificadas en esta clase, lo que reduce la probabilidad de clasificar erróneamente una observación de esta clase, mitigando así el costo mayor.
+
+------------------------------------------------------------------------
+
+### Ejercicio 3
+
+Generate 100 observations from a bivariate Gaussian distribution $N(\mu_1,\Sigma_1)$ with $\mu_1=(3,1)'$ and $\Sigma_1=I$ (identity matrix) and label them as 1. Generate another 100 observations from a bivariate Gaussian distribution $N(\mu_2,\Sigma_2)$ $\mu_2=(1,3)'$ and $\Sigma_2=I$ and label them as 0. Together, these 200 observations constitute the training set.
+
+a.  Write an R code to generate this data set.
+
+b.  Plot this data using different colors for the two classes.
+
+c.  Assuming that priors are equals, find the Bayes Classifier.
+
+d.  Compute the training error.
+
+e.  Train a linear regression model, using the function $lm(y\sim x)$, with the training set.
+
+f.  Plot the boundary decision of Bayes Classifier and the line obtained by the linear regression model.
+
+g.  Generate a test set of 50 observations and compute the test error of Bayes Classifier and the linear model.\
+
+#### Respuesta
+
+a.  **Write an R code to generate this data set**
+
+```{r}
+library(MASS)
+set.seed(2023)
+# Datos de categoría 1
+mu1 = c(3, 1)
+sigma1 = diag(2)
+n1 = 100
+
+obs1 = mvrnorm(n1, mu1, sigma1)
+cat1 = rep(1,n1)
+
+# Dataset de categoría 0
+mu2 = c(1, 3)
+sigma2 = diag(2)
+n2 = 100
+
+obs2 = mvrnorm(n2, mu2, sigma2)
+cat2 = rep(0,n2)
+
+# Dataset de entrenamiento
+mat1 = matrix(cbind(obs1,cat1), ncol = 3)
+mat2 = matrix(cbind(obs2,cat2), ncol = 3)
+
+mat_train = rbind(mat1, mat2)
+
+```
+
+b.  **Plot this data using different colors for the two classes**
+
+```{r}
+plot (x = mat_train[,1], y = mat_train[,2], col = ifelse(mat_train[,3] == 1,'red3','blue4')
+      , xlab = 'x1', ylab = 'x2', main = 'Data plot', pch = 20)
+
+legend('topright', legend = c('Y = 1', 'Y = 0'), col = c('red3', 'blue4'), pch = 20)
+```
+
+c.  **Assuming that priors are equals, find the Bayes Classifier.**
+
+Del desarrollo del ejercicio 1, se tiene que, utilizando el clasificador de Bayes, una observación es clasificada como $Y=1$ si se cumple:
+
+$$P(X=X|Y=1)\times P(Y=1)>P(X=X|Y=0)\times P(Y=0)$$
+
+Dado que se tienen 100 observaciones de cada categoría, se cumple que $P(Y=1)=P(Y=0)=0.5$, por lo que una clasificación es clasificada como $Y=1$ si:
+
+$$\frac{P(X=X|Y=1)}{P(X=X|Y=0)} > 1$$
+
+Asumiendo que las densidades de $X|Y=1$ y $X|Y=0$ son $f_1(X)$ y $f_0(X)$ respectivamente, y utilizando el teorema del valor medio, se tiene que una observación es clasificada como $Y=1$ si se cumple:
+
+$$
+f_1(X)>f_0(X)
+$$
+
+Dado que los datos fueron generados en base a distribuciones normales bivariadas para cada categoría, se tiene que:
+
+$$
+X|Y=1 \sim N(\mu_1,\Sigma_1); \space \space con \space \mu_1=(3,1)\space y\space \Sigma_1=\begin{pmatrix} 1&0\\0&1\end{pmatrix}
+$$
+
+$$
+X|Y=0 \sim N(\mu_0,\Sigma_0); \space \space con \space \mu_0=(1,3)\space y\space \Sigma_0=\begin{pmatrix} 1&0\\0&1\end{pmatrix}
+$$
+
+Asimismo, se usa la fórmula de la densidad de la distribución normal bivariada, presentada a continuación:
+
+$$
+f_x(X)=\frac{1}{2 \pi \sqrt{|\Sigma|}} e^{-\frac{1}{2}(X-\mu)^T\Sigma^{-1}(X-\mu)}
+$$
+
+Entonces, para $X|Y=1$ se tiene que:
+
+$$|\Sigma_1|=1$$
+
+$$(X-\mu_1)^T=(x_1-3,x_2-1)$$
+
+$$
+\Sigma_1^{-1}(X-\mu_1)=\begin{pmatrix} 1&0\\0&1\end{pmatrix}\times\binom{x_1-3}{x_2-1}=\binom{x_1-3}{x_2-1}
+$$
+
+Luego:$$
+(X-\mu_1)^T\Sigma_1^{-1}(X-\mu1)=(x_1-3,x_2-1)\times\binom{x_1-3}{x_2-1}=(x_1-3)^2+(x_2-1)^2
+$$
+
+De manera que la función de densidad para $X|Y=1$ se puede escribir como:
+
+$$
+f_1(X)=\frac{1}{2\pi}e^{-\frac{1}{2}\left[(x_1-3)^2+(x_2-1)^2\right]}
+$$
+
+Análogamente, se puede escribir la función de densidad para $X|Y=0$ de la siguiente manera:
+
+$$
+f_0(X)=\frac{1}{2\pi}e^{-\frac{1}{2}\left[(x_1-1)^2+(x_2-3)^2\right]}
+$$
+
+Sustituyendo estas dos expresiones en la inecuación presentada anteriormente, se tiene que una observación será clasificada como $Y=1$ si se cumple que:
+
+$$
+\frac{1}{2\pi}e^{-\frac{1}{2}\left[(x_1-3)^2+(x_2-1)^2\right]}>\frac{1}{2\pi}e^{-\frac{1}{2}\left[(x_1-1)^2+(x_2-3)^2\right]}
+$$
+
+Simplificando el factor $\frac{1}{2\pi}$, aplicando la función logaritmo de ambos lados de la ecuación y operando con ambos términos, se tiene que:
+
+$$-\frac{1}{2}(x_1-3)^2+(x_2-1)^2>-\frac{1}{2}(x_1-1)^2(x_2-3)^2$$
+
+$$(x_1-1)^2+(x_2-3)^2>(x_1-3)^2+(x_2-1)^2$$
+
+$$x_1^2-2x_1+1+x_2^2-6x_2+9>x_1^2-6x_1+9+x_2^2-2x_2+1$$
+
+$$-2x_1-6x_2>-6x_1-2x_2$$
+
+$$4x_1>4x_2$$
+
+$$x_1>x_2$$
+
+De manera que el clasificador de Bayes se puede escribir mediante la siguiente expresión:
+
+$$Y_{pred}=1\space \space \space si\space \space \space x_1>x_2$$
+
+$$Y_{pred}=0\space \space \space si\space \space \space x_1<x_2$$
+
+Y la frontera de Bayes será la recta $x_1=x_2$
+
+d.  **Compute the training error.**
+
+Dado que la frontera de Bayes es la recta $x_1 = x_2$, y que la regla de Bayes indica que una observación debería ser clasificada con $Y=1$ si $x_1>x_2$ y con $Y=0$ si $x_1<x_2$, el error de entrenamiento será dado por la cantidad de observaciones que hayan sido clasificadas con $Y = 1$ cuando $x_1<x_2$ sumadas a la cantidad de observaciones clasificadas como $Y = 0$ cuando $x_1>x_2$
+
+```{r}
+df_train = data.frame(mat_train)
+false_positive = subset(df_train, df_train[,1]<df_train[,2] & df_train[,3] == 1)
+false_negative = subset(df_train, df_train[,1]>df_train[,2] & df_train[,3] == 0)
+
+fp = nrow(false_positive)
+fn = nrow(false_negative)
+tot = nrow(df_train)
+
+bayes_train_error = (fp + fn)/tot
+
+cat ('Falsos positivos:',fp,'\n')
+cat ('Falsos negativos:',fn,'\n')
+cat ('Total de observaciones:',tot,'\n')
+cat ('Error de Bayes:',bayes_train_error)
+```
+
+e.  **Train a linear regression model, using the function** $lm(y\sim x)$**, with the training set.**
+
+```{r}
+colnames(df_train) = c('x1', 'x2', 'y')
+
+regressor = lm(y~x1+x2, data = df_train)
+
+coef(regressor)
+```
+
+f.  **Plot the boundary decision of Bayes Classifier and the line obtained by the linear regression model.**
+
+Dado que el problema en cuestión es de clasificación, se plantea el siguiente clasificador en base al modelo de regresión planteado:
+
+$$Y_{pred}=1 \space\space si\space\space \beta_0^{est}+\beta_1^{est}x_1+\beta_2^{est}x_2>0.5$$
+
+$$Y_{pred}=0 \space\space si\space\space \beta_0^{est}+\beta_1^{est}x_1+\beta_2^{est}x_2<0.5$$
+
+Siendo $\beta_i^{est}$ el estimador del parámetro $\beta_i$. De esta manera, la frontera para el clasificador planteado será dada por la ecuación:
+
+$$
+f(x_1,x_2) = \beta_0^{est}+\beta_1^{est}x_1+\beta_2^{est}x_2-0.5=0
+$$
+
+Operando con esta ecuación, se obtiene la ecuación de la recta de la frontera para el clasificador planteado:
+
+$$\beta_0^{est}+\beta_1^{est}x_1+\beta_2^{est}x_2-0.5=0$$
+
+$$\beta_2^{pred}x_2 = -\beta_1^{pred}x_1+0.5-\beta_0^{pred}$$
+
+$$x_2=-\frac{\beta_1^{pred}}{\beta_2^{pred}}x_1+\frac{0.5-\beta_0^{pred}}{\beta_2^{pred}}$$
+
+$$
+x_2=Ax_1+B;\space\space con\space\space A=-\frac{\beta_1^{pred}}{\beta_2^{pred}} \space\space y \space\space 
+B=\frac{0.5-\beta_0^{pred}}{\beta_2^{pred}}
+$$
+
+Cabe destacar que, dado que $\beta_2$ es negativo, una observación será clasificada como $Y=1$ si $x_2<Ax_1+B$.
+
+```{r}
+
+# Ploteo de puntos
+plot (x = mat_train[,1], y = mat_train[,2], col = ifelse(mat_train[,3] == 1,'red3','blue4')
+      , xlab = 'x1', ylab = 'x2', main = 'Training data plot', pch = 20)
+
+# Recta obtenida por modelo de regresión lineal
+beta0 = coef(regressor)[1]
+beta1 = coef(regressor)[2]
+beta2 = coef(regressor)[3]
+umbral = 0.5
+
+abline(a = (umbral - beta0)/beta2, b = -beta1/beta2, col = 'green4', lwd = 2)
+
+# Frontera de Bayes
+abline(a = 0, b = 1, col = 'orange', lwd = 2)
+
+# Delimitación de zonas
+text(x = 3.5, y = 4.7, labels = "Ypred = 0", col = 'blue4', cex = 1.2)
+text(x = 4.7, y = 3.5, labels = "Ypred = 1", col = 'red3', cex = 1.2)
+
+# Referencia
+par(mar = c(5,5,2,2), xpd = TRUE)
+
+legend('topleft', legend = c('Y = 1', 'Y = 0', 'Modelo de regresión', 'Frontera de Bayes'),
+       col = c('red3', 'blue4', 'green4', 'orange'), lty = c(0,0,1,1), pch = 20, 
+       inset = c(0,-0.325))
+
+```
+
+g.  **Generate a test set of 50 observations and compute the test error of Bayes Classifier and the linear model.**
+
+```{r}
+# Dataset de testeo.
+# Se generan con distribución normal en torno al (1,1) de manera que la media esté dentro de 
+# la frontera de Bayes
+
+library(MASS)
+mu = c(1, 1)
+sigma = diag(2)
+n = 50
+
+obs = mvrnorm(n, mu, sigma)
+cat = sample(1:0, size = n, replace = TRUE, prob = c(0.5, 0.5))
+
+mat_test = matrix(cbind(obs,cat), ncol = 3)
+
+df_test = data.frame(mat_test)
+colnames(df_test) = c('x1', 'x2', 'y')
+
+df_test
+
+```
+
+```{r}
+# Test error para clasificador de Bayes
+set.seed(2024)
+false_positive_test = subset(df_test, df_test[,1]<df_test[,2] & df_test[,3] == 1)
+false_negative_test = subset(df_test, df_test[,1]>df_test[,2] & df_test[,3] == 0)
+
+fp_test = nrow(false_positive_test)
+fn_test = nrow(false_negative_test)
+tot_test = nrow(df_test)
+
+bayes_test_error = (fp_test + fn_test)/tot_test
+
+cat ('Falsos positivos:',fp_test,'\n')
+cat ('Falsos negativos:',fn_test,'\n')
+cat ('Total de observaciones:',tot_test,'\n')
+cat ('Error de testeo de Bayes:',bayes_test_error)
+```
+
+Como fue explicado en la parte f, de acuerdo al modelo lineal, una observación será clasificada como $Y=1$ si $x_2<Ax_1+B$, siendo $A=-\frac{\beta_1}{\beta_2}$ y $B=\frac{0.5-\beta_0}{\beta_2}$. Entonces, el error de testeo será dado por la cantidad de observaciones que hayan sido clasificadas con $Y = 1$ cuando $x_2>Ax_1+B$ sumadas a la cantidad de observaciones clasificadas como $Y = 0$ cuando $x_2<Ax_1+B$
+
+```{r}
+# Test error para modelo de regresión lineal
+A = -beta1/beta2
+B = (umbral-beta0)/beta2
+
+false_positive_test_lin = subset(df_test, df_test[,2]>A*df_test[,1]+B & df_test[,3] == 1)
+false_negative_test_lin = subset(df_test, df_test[,2]<A*df_test[,1]+B & df_test[,3] == 0)
+
+fp_test_lin = nrow(false_positive_test_lin)
+fn_test_lin = nrow(false_negative_test_lin)
+tot_test = nrow(df_test)
+
+lin_test_error = (fp_test_lin + fn_test_lin)/tot_test
+
+cat ('Falsos positivos:',fp_test_lin,'\n')
+cat ('Falsos negativos:',fn_test_lin,'\n')
+cat ('Total de observaciones:',tot_test,'\n')
+cat ('Error de testeo de modelo lineal:',lin_test_error)
+```
+
+```{r}
+# Ploteo de puntos
+plot (x = mat_test[,1], y = mat_test[,2], col = ifelse(mat_test[,3] == 1,'red3','blue4'), 
+      xlab = 'x1', ylab = 'x2', main = 'Test data plot', pch = 20)
+
+# Recta obtenida por modelo de regresión lineal
+abline(a = (umbral - beta0)/beta2, b = -beta1/beta2, col = 'green4', lwd = 2)
+
+# Frontera de Bayes
+abline(a = 0, b = 1, col = 'orange', lwd = 2)
+
+# Delimitación de zonas
+text(x = 2.5, y = 0, labels = "Ypred = 0", col = 'blue4', cex = 1.2)
+text(x = 0, y = 2, labels = "Ypred = 1", col = 'red3', cex = 1.2)
+
+# Referencia
+par(mar = c(5,5,2,2), xpd = TRUE)
+
+legend('topleft', legend = c('Y = 1', 'Y = 0', 'Modelo de regresión', 'Frontera de Bayes'), 
+       col = c('red3', 'blue4', 'green4', 'orange'), lty = c(0,0,1,1), pch = 20, 
+       inset = c(0,-0.325))
+```
+
+Es posible apreciar que el error obtenido para el clasificador de Bayes y para el modelo lineal es el mismo. Esto tiene sentido debido a que las fronteras de ambos modelos son casi iguales. Asimismo, si se observa el gráfico, es posible apreciar que no hay puntos que queden en una región para un modelo y en la otra región para el otro modelo, de manera que los errores obtenidos deben ser los mismos.
+
+------------------------------------------------------------------------
+
+### Ejercicio 4
+
+Consider the following table.
+
+|       |       |       |       |
+|-------|-------|-------|-------|
+| $x_1$ | $x_2$ | $x_3$ | $y$   |
+| 0     | 3     | 0     | Red   |
+| 2     | 0     | 0     | Red   |
+| 0     | 1     | 3     | Red   |
+| 0     | 1     | 2     | Green |
+| -1    | 0     | 1     | Green |
+| 1     | 1     | 1     | Red   |
+
+a.  With the euclidean distance, what is the prediction with k = 1 and with k = 3 for the test observation (0; 0; 0)?
+
+b.  If the Bayes decision boundary in this problem is highly non-linear, then would we expect the best value for k to be large or small? Why?\
+
+#### Respuesta
+
+a.  **With the euclidean distance, what is the prediction with k = 1 and with k = 3 for the test observation (0; 0; 0)?**
+
+#### Versión manual:
+
+En primer lugar se calculan las distancias euclídeas entre el punto para el cual se desea realizar la predicción y los puntos del dataset de entrenamiento. La distancia euclídea, para el caso de tres dimensiones $x_1,x_2,x_2$, entre un punto $x_0=(x_{1,0}\space ,\space x_{2,0}\space,\space x_{3,0})$ y un punto cualquiera $x=(x_1\space ,\space x_2\space,\space x_3)$ se obtiene mediante la siguiente expresion:
+
+$$
+d_{x,x_0} = \sqrt{(x_1-x_{1,0})^2 + (x_2-x_{2,0})^2 + (x_3-x_{3,0})^2}
+$$
+
+Dado que el punto en cuestión tiene coordenadas $x_0=(0,0,0)$, la expresión anterior se simplifica de la siguiente manera:
+
+$$
+d_{x,x_0} = \sqrt{x_1^2 + x_2^2 + x_3^2}
+$$ Donde $x_1,x_2,x_3$ son las coordenadas de los puntos del dataset de entrenamiento. A continuación se calculan las distancias entre el punto para el cual se desea realizar la predicción y los puntos del dataset de entrenamiento.
+
+$$d_1 = \sqrt{0^2+3^2+0^2}=\sqrt{9}=3$$
+
+$$d_2 = \sqrt{2^2+0^2+0^2}=\sqrt{4}=2$$
+
+$$d_3 = \sqrt{0^2+1^2+3^2}=\sqrt{10}\sim3.16$$
+
+$$d_4 = \sqrt{0^2+1^2+2^2}=\sqrt{5}\sim2.24$$
+
+$$d_5 = \sqrt{(-1)^2+0^2+1^2}=\sqrt{2}\sim1.41$$
+
+$$d_6 = \sqrt{1^2+1^2+1^2}=\sqrt{3}\sim1.73$$
+
+Luego, para $k=1$, se clasifica la observación con la categoría del punto del dataset de entrenamiento más cercano al punto en cuestión. De las distancias calculadas arriba, se desprende que el punto más cercano es el punto 5, con una distancia de $d_5=\sqrt{2}\sim1.41$, de manera que se clasifica a la observación con la categoría de dicho punto. Dado que dicha categoría es "Green", la predicción para el punto en cuestión también es "Green".
+
+Para el caso de $k=3$ se consideran los 3 puntos del dataset de entrenamiento más cercanos al punto en cuestión. Estos puntos son el punto 5, 6 y 2 con distancias de $d_5=\sqrt{2}\sim1.41$, $d_6=\sqrt{3}\sim1.73$ y $d_2=2$ respectivamente. La predicción para el punto en cuestión será la clase mayoritaria para estos tres puntos. Dado que las clases para los puntos 5, 6 y 2 son "Red", "Green" y "Red" respectivamente, la clase mayoritaria es "Red" ya que aparece dos veces, de manera que la predicción para el punto en cuestión es "Red".
+
+#### Versión en R:
+
+```{r}
+# Generación de dataset
+x1 = c(0,2,0,0,-1,1)
+x2 = c(3,0,1,1,0,1)
+x3 = c(0,0,3,2,1,1)
+y = c('Red','Red','Red','Green', 'Green', 'Red')
+
+mat_dat = matrix(cbind(x1,x2,x3,y), ncol = 4)
+df = data.frame(mat_dat)
+colnames(df) = c('x1', 'x2', 'x3', 'y')
+
+df$x1 = as.integer(df$x1)
+df$x2 = as.integer(df$x2)
+df$x3 = as.integer(df$x3)
+df
+```
+
+```{r}
+# Entrenamiento de modelo y predicciones
+library(class)
+
+test_obs = c(0,0,0)
+
+knn1 = knn(train = df[,1:3], test = test_obs, cl = df$y, k=1)
+knn3 = knn(train = df[,1:3], test = test_obs, cl = df$y, k=3)
+
+cat ('Prediccion con K = 1 para (0,0,0):',as.character(knn1[1]),'\n')
+cat ('Prediccion con K = 3 para (0,0,0):',as.character(knn3[1]))
+```
+
+De manera que las predicciones realizadas en el desarrollo manual y computacional coinciden para ambos valores de k.
+
+b.  **If the Bayes decision boundary in this problem is highly non-linear, then would we expect the best value for k to be large or small? Why?**
+
+Si la frontera de Bayes fuese extremadamente no lineal, sería esperable que el valor óptimo de k fuera bajo.
+
+Un valor bajo de k produce un clasificador con bajo error de sesgo pero alta varianza, debido a que se utilizan pocos vecinos para realizar una predicción. En el caso extremo de k=1, en el cual se utiliza únicamente el punto más cercano del dataset de entrenamiento para realizar la predicción, la frontera obtenida mediante el modelo cambiará significativamente a medida que se aleja de un punto de determinada clase y se acerca a un punto de clase distinta, ya que la predicción será dada por este nuevo punto, produciendo así una frontera muy sinuosa. A medida que se aumenta el valor de k, cada punto tendrá menor peso en la predicción, lo que producirá curvas menos sinuosas.
+
+Un valor alto de k produce un clasificador con alto error de sesgo pero varianza muy baja, ya que se utilizan muchos vecinos para realizar una predicción. Esto contribuye a alisar la frontera, ya que acercarse a un punto de determinada clase y alejarse de otro de clase distinta no generará cambios en muchas de las predicciones debido a que se considera una gran cantidad de puntos para realizar la predicción. Esto implica que sea esperable que un valor alto de k pueda producir fronteras más cercanas a fronteras lineales.
+
+En virtud de esto, si la frontera de Bayes es extremadamente no lineal, es esperable que una frontera más sinuosa pueda generar mejores predicciones, lo que se logra con un valor de k bajo. Cabe destacar, igualmente, que un valor de k muy bajo puede llevar al sobreajuste del modelo, de manera que, si bien es esperable que el valor óptimo de k sea bajo, también es esperable que sea mayor a los valores contra el extremo mínimo del rango posible.
